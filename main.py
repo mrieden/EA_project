@@ -1,51 +1,27 @@
 # from display import *
-import mysql.connector
-from mysql.connector import errorcode
+from database import TimetableDatabaseManager
+db_manager = TimetableDatabaseManager()
+db_manager.connect()    # connect first
+db_manager.drop_database()
+db_manager.setup_database()  # setup database
+db_manager.close_connection()
 
-config = {
-    'user': 'root',           # change this if you're using another user
-    'password': 'mrieden',  # replace with your MySQL password
-    'host': 'localhost',
-    'port': 3306
-}
 
-DB_NAME = 'timetable'
+# import Schedule as sch
+# for i in range(0,10):
+#     m = sch.Schedule()
+#     m.initialize()
+#     print(len(m.get_classes()))
 
-def load_data_from_database():
-    try:
-        cnx = mysql.connector.connect(**config)
-        cursor = cnx.cursor()
-        
-        cnx.database = DB_NAME
-        
-        cursor.execute("SELECT * FROM departments")
-        departments = cursor.fetchall()
+# from genetic import Population as pop
+# pop(5).get_schedules
 
-        cursor.execute("SELECT * FROM courses")
-        courses = cursor.fetchall()
 
-        cursor.execute("SELECT * FROM instructors")
-        instructors = cursor.fetchall()
-
-        cursor.execute("SELECT * FROM rooms")
-        rooms = cursor.fetchall()
-        
-        cursor.execute("SELECT * FROM timeslots")
-        timeslots = cursor.fetchall()
-
-        cnx.commit()
-        print("successfully loaded data from database")
-        
-        
-    except mysql.connector.Error as err:
-        print(f"Error: {err}")
-
-    finally:
-        cursor.close()
-        cnx.close()
-    return departments, courses, instructors, rooms, timeslots
-        
-        
-departments, courses, instructors, rooms, timeslots = load_data_from_database()
-print(departments)
-print(courses)
+# from input import Data as data
+# data = data()
+# depts = data.get_depts()
+# for i in range(0,len(depts)):
+#     courses = depts[i].get_courses()
+#     for j in range(0,len(courses)):
+#         print(courses[j].)
+#         print("")

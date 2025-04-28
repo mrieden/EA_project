@@ -1,71 +1,31 @@
 from my_classes import *
 import random as rnd
 from display import *
-import mysql.connector
-from mysql.connector import errorcode
-from database import config,DB_NAME
-
+import sqlite3
 
 
 
 class Data:
     def __init__(self):
-        departments, courses, instructors, rooms, timeslots = self.load_data_from_database()
-        self._rooms = rooms
-        self._meetingTimes = timeslots
-        self._instructors = instructors
-        self._courses = courses
-        self._depts = departments
+        self._rooms = self._get_rooms_from_user()
+        self._meetingTimes = self._get_meeting_times_from_user()
+        self._instructors = self._get_instructors_from_user()
+        self._courses = self._get_courses_from_user()
+        self._depts = self._get_departments_from_user()
         self._numberOfClasses = sum(len(dept.get_courses()) for dept in self._depts)
         self.get_setup()
-        
-    def load_data_from_database():
-        try:
-            cnx = mysql.connector.connect(**config)
-            cursor = cnx.cursor()
-            
-            cnx.database = DB_NAME
-            
-            cursor.execute("SELECT * FROM departments")
-            departments = cursor.fetchall()
-
-            cursor.execute("SELECT * FROM courses")
-            courses = cursor.fetchall()
-
-            cursor.execute("SELECT * FROM instructors")
-            instructors = cursor.fetchall()
-
-            cursor.execute("SELECT * FROM rooms")
-            rooms = cursor.fetchall()
-            
-            cursor.execute("SELECT * FROM timeslots")
-            timeslots = cursor.fetchall()
-
-            cnx.commit()
-            print("successfully loaded data from database")
-            
-            
-        except mysql.connector.Error as err:
-            print(f"Error: {err}")
-
-        finally:
-            cursor.close()
-            cnx.close()
-        
-        return departments, courses, instructors, rooms, timeslots
 
     def _get_rooms_from_user(self):
         rooms = []
-        inputs = rooms
+        inputs = room_entry.get().split(",")
         for input in inputs:
-            room_name = input[0]
-            capacity = input[1]
+            room_name, capacity = input.split()
             rooms.append(Room(room_name, int(capacity)))
         return rooms
 
     def _get_meeting_times_from_user(self):
         meeting_times = []
-        inputs = timesslots
+        inputs = meeting_time_entry.get().split(",")
         for input in inputs:
             mt_id, mt_time = input.split(maxsplit=1)
             meeting_times.append(Meeting_Time(mt_id, mt_time))
@@ -73,7 +33,7 @@ class Data:
 
     def _get_instructors_from_user(self):
         instructors = []
-        inputs = instructors
+        inputs = instructor_entry.get().split(",")
         for input in inputs:
             inst_id, inst_name = input.split(maxsplit=1)
             instructors.append(Instructor(inst_id, inst_name))

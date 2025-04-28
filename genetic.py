@@ -1,4 +1,7 @@
 from my_classes import *
+from Schedule import Schedule as sch ,data 
+
+data = data
 
 class Population:
     def __init__(self,size):
@@ -6,15 +9,21 @@ class Population:
         self._data = data
         self._schedules = []
         for i in range(0,size):
-            self._schedules.append(Schedule().initialize())
+            self._schedules.append(sch().initialize())
 
     def get_schedules(self):
         return self._schedules
     
+    def get_size(self):
+        return self._size
+    
 
 
 class Genetic_Algorithm:
-    def evolve(self, population):
+    def evolve(self, population,pop_size,mutaion_rate):
+        global POPULATION_SIZE , MUTATION_RATE
+        MUTATION_RATE = mutaion_rate
+        POPULATION_SIZE = pop_size
         population = self._crossover_population(population)
         return self._mutate_population(population)
     
@@ -36,8 +45,8 @@ class Genetic_Algorithm:
         return population
     
     def _crossover_schedule(self,schedule1,schedule2):
-        crossoverSchedule = Schedule().initialize()
-        for i in range(0, len(crossoverSchedule.get_classes())):
+        crossoverSchedule = sch().initialize()
+        for i in range(0, len(schedule1.get_classes())):
             if(rnd.random()> 0.5): 
                 crossoverSchedule.get_classes()[i] = schedule1.get_classes()[i]
             else:
@@ -45,7 +54,7 @@ class Genetic_Algorithm:
         return crossoverSchedule
     
     def _mutate_schedule(self, mutateSchdule):
-        schedule = Schedule().initialize()
+        schedule = sch().initialize()
         for i in range(0, len(mutateSchdule.get_classes())):
             if(MUTATION_RATE > rnd.random()):
                 mutateSchdule.get_classes()[i] = schedule.get_classes()[i]
