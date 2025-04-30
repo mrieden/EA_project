@@ -1,11 +1,11 @@
 import math
-import random as rnd
+import random 
 import tkinter as tk
-POPULATION_SIZE = 50
+POPULATION_SIZE = 0
 NUMB_OF_ELITE_SCHEDULES = 5
 TOURNAMENT_SELECTION_SIZE = 3
 MUTATION_RATE = 0.1
-rnd.seed(1)
+
 fitness_values = []
 generation_numbers = []
 plot_windows = []
@@ -15,6 +15,7 @@ class config:
         global POPULATION_SIZE,MUTATION_RATE
         POPULATION_SIZE = POP_SIZE
         MUTATION_RATE = MUTAT_RATE
+        random.seed(1)
 
 class Course:
     def __init__(self,id,name,max_no_students,instructors):

@@ -1,5 +1,5 @@
 import math
-from my_classes import Course, Room, Instructor, Department, Class, Meeting_Time,rnd
+from my_classes import Course, Room, Instructor, Department, Class, Meeting_Time,random
 from input import Data as data
 data= data()
 
@@ -35,9 +35,9 @@ class Schedule:
             for j in range(0,len(courses)):
                 newClass = Class(self._classNumb,depts[i],courses[j])
                 self._classNumb +=1
-                newClass.set_meetingTime(data.get_meetingTime()[rnd.randrange(0,len(data.get_meetingTime()))])
-                newClass.set_room(data.get_rooms()[rnd.randrange(0,len(data.get_rooms()))])
-                newClass.set_instructor(courses[j].get_instructors()[rnd.randrange(0,len(courses[j].get_instructors()))])
+                newClass.set_meetingTime(data.get_meetingTime()[random.randrange(0,len(data.get_meetingTime()))])
+                newClass.set_room(data.get_rooms()[random.randrange(0,len(data.get_rooms()))])
+                newClass.set_instructor(courses[j].get_instructors()[random.randrange(0,len(courses[j].get_instructors()))])
                 self._classes.append(newClass)
         return self
     
@@ -80,7 +80,8 @@ class Schedule:
 
         # return   1 / (1 + (self._numbOfConflicts ** 2))  
         return  1 / (1 + math.log(self._numbOfConflicts + 1))
-        #return  1 / ((1.0*self._numbOfConflicts + 1))
+        # return  1 / ((1.0*self._numbOfConflicts + 1))
+        # return self._numbOfConflicts+1
 
 
 

@@ -110,7 +110,7 @@ class TimetableDatabaseManager:
             ('General'),
             ('information Technology')""",
 
-            """INSERT INTO courses (course_name, dept_id,student_no) VALUES 
+            """INSERT INTO courses (course_name, dept_id,no_of_students) VALUES 
                 ('Algorithms', 1,20), 
                 ('Data Structures', 1,10), 
                 ('Operating Systems', 1, 20), 

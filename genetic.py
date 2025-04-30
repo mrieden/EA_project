@@ -47,7 +47,7 @@ class Genetic_Algorithm:
     def _crossover_schedule(self,schedule1,schedule2):
         crossoverSchedule = sch().initialize()
         for i in range(0, len(schedule1.get_classes())):
-            if(rnd.random()> 0.5): 
+            if(random.random()> 0.5): 
                 crossoverSchedule.get_classes()[i] = schedule1.get_classes()[i]
             else:
                 crossoverSchedule.get_classes()[i] = schedule2.get_classes()[i]
@@ -56,7 +56,7 @@ class Genetic_Algorithm:
     def _mutate_schedule(self, mutateSchdule):
         schedule = sch().initialize()
         for i in range(0, len(mutateSchdule.get_classes())):
-            if(MUTATION_RATE > rnd.random()):
+            if(MUTATION_RATE > random.random()):
                 mutateSchdule.get_classes()[i] = schedule.get_classes()[i]
         return mutateSchdule
 
@@ -64,7 +64,7 @@ class Genetic_Algorithm:
         tournament_pop = Population(0)
         i = 0
         while i < TOURNAMENT_SELECTION_SIZE:
-            tournament_pop.get_schedules().append(pop.get_schedules()[rnd.randrange(0,POPULATION_SIZE)])
+            tournament_pop.get_schedules().append(pop.get_schedules()[random.randrange(0,POPULATION_SIZE)])
             i += 1
         tournament_pop.get_schedules().sort(key=lambda x: x.get_fitness(),reverse = True)
         return tournament_pop

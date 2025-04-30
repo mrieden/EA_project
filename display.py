@@ -1,6 +1,8 @@
 import prettytable as prettytable
 import tkinter as tk
 from tkinter import ttk
+from tkinter import Canvas, Frame, Scrollbar
+import tkinter.messagebox as messagebox
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from my_classes import *
@@ -13,6 +15,7 @@ generation_numbers = []
 fitness_values = []
 final_schedule = None
 total_generations = 0
+average_fitness_values = [] 
 #default values
 POPULATION_SIZE = 9  
 MUTATION_RATE = 0.1
@@ -26,6 +29,7 @@ class DisplayMgr:
     def __init__(self):
         self.data = data
     
+    
     def print_available_data(self):
         clear_text(output_data_text)
         output_data_text.insert(tk.END, "> All Available Data\n")
@@ -34,6 +38,7 @@ class DisplayMgr:
         self.print_room()
         self.print_instructor()
         self.print_meeting_times()
+    
     
     def print_dept(self):
         depts = self.data.get_depts()
@@ -47,6 +52,7 @@ class DisplayMgr:
             availableDeptsTable.add_row([depts[i].get_name(), tempStr])
         output_data_text.insert(tk.END, availableDeptsTable.get_string() + "\n\n")
 
+
     def print_course(self):
         availableCoursesTable = prettytable.PrettyTable(['id','course #','max # of students','instructors'])
         courses = self.data.get_courses()
@@ -59,12 +65,14 @@ class DisplayMgr:
             availableCoursesTable.add_row([courses[i].get_id(), courses[i].get_name(), str(courses[i].get_max_no_students()), tempStr])
         output_data_text.insert(tk.END, availableCoursesTable.get_string() + "\n\n")
 
+
     def print_instructor(self):
         availableInstructorTable = prettytable.PrettyTable(['id','instructors'])
         instructors = self.data.get_instructors()
         for i in range(0, len(instructors)):
             availableInstructorTable.add_row([instructors[i].get_id(), instructors[i].get_name()])
         output_data_text.insert(tk.END, availableInstructorTable.get_string() + "\n\n")
+        
         
     def print_room(self):
         availableRoomTable = prettytable.PrettyTable(['room #','max seating capacity'])
@@ -73,6 +81,7 @@ class DisplayMgr:
             availableRoomTable.add_row([str(rooms[i].get_number()), str(rooms[i].get_seatingCapacity())])
         output_data_text.insert(tk.END, availableRoomTable.get_string() + "\n\n")
         
+        
     def print_meeting_times(self):
         availableMeetingTimeTable = prettytable.PrettyTable(['id','Meeting Time'])
         meetingTimes = self.data.get_meetingTime()
@@ -80,12 +89,14 @@ class DisplayMgr:
             availableMeetingTimeTable.add_row([meetingTimes[i].get_id(), meetingTimes[i].get_time()])
         output_data_text.insert(tk.END, availableMeetingTimeTable.get_string() + "\n\n")
         
+        
     def print_generations(self, population):
         table1 = prettytable.PrettyTable(['schedule #','fitness','# of conflicts'])
         schedules = population.get_schedules()
         for i in range(0, len(schedules)):
             table1.add_row([str(i), round(schedules[i].get_fitness(), 3), schedules[i].get_numbOfConflicts()])
         output_schedule_text.insert(tk.END, table1.get_string() + "\n\n")
+        
         
     def print_schedule_as_table(self, schedule):
         classes = schedule.get_classes()
@@ -103,54 +114,71 @@ class DisplayMgr:
             ])
         output_schedule_text.insert(tk.END, table.get_string() + "\n\n")
 
-def create_plot_tab():
-    global fig, ax, canvas
-    fig, ax = plt.subplots(figsize=(8, 4))
+
+def create_plot_widget():
+    fig, ax = plt.subplots(figsize=(12, 6))  # slightly wider
     ax.set_title("Fitness Over Generations")
     ax.set_xlabel("Generation")
     ax.set_ylabel("Fitness")
     ax.grid()
 
-    canvas = FigureCanvasTkAgg(fig, master=tab3)
+    canvas = FigureCanvasTkAgg(fig, master=plot_frame)  # Use scrollable frame
     canvas_widget = canvas.get_tk_widget()
-    canvas_widget.pack(fill="both", expand=True)
+    canvas_widget.pack(fill="x", expand=True, padx=2)
 
-def update_plot(generation, fitness):
-    global ax, fitness_values, generation_numbers, canvas
-    generation_numbers.append(generation)
-    fitness_values.append(fitness)
+    return fig, ax, canvas
+
+
+def update_plot(generation, best_fitness, avg_fitness,
+                        ax, canvas, generations, best_values, avg_values):
+    generations.append(generation)
+    best_values.append(best_fitness)
+    avg_values.append(avg_fitness)
+
     ax.clear()
-    ax.plot(generation_numbers, fitness_values, label="Best Fitness", marker="o")
+    ax.plot(generations, best_values, label="Best Fitness", color="green", marker="o")
+    ax.plot(generations, avg_values, label="Average Fitness", color="blue", linestyle="--")
     ax.set_title("Fitness Over Generations")
     ax.set_xlabel("Generation")
     ax.set_ylabel("Fitness")
     ax.legend()
-    ax.grid()
+    ax.grid(True)
     canvas.draw()
+
+def add_plot_info(pop_size, mutation_rate):
+    info_text = (
+        f"Population Size: {pop_size}    "
+        f"Mutation Rate: {mutation_rate:.2f}    "
+    )
+    label = tk.Label(plot_frame, text=info_text, font=("Helvetica", 25), fg="darkgreen", anchor='center', justify='center')
+    label.pack(fill="x", padx=10, pady=(10, 0))
+
+
+
 
 def clear_text(widget):
     widget.config(state=tk.NORMAL)
     widget.delete(1.0, tk.END)
 
+
 def clear_treeview(tree):
     for item in tree.get_children():
         tree.delete(item)
+
 
 def timetable_scheduling():
     global final_schedule
     generation_numbers.clear()
     fitness_values.clear()
+    average_fitness_values.clear()
     clear_text(output_schedule_text)
     clear_treeview(final_schedule_tree)
     
     global POPULATION_SIZE, MUTATION_RATE
 
-    # Get user input values
-    try:
-        POPULATION_SIZE = int(population_entry.get())
-        MUTATION_RATE = float(mutation_entry.get())
-    except ValueError:
-        set_status("Invalid input! Using default values.")
+    POPULATION_SIZE = int(population_entry.get())
+    MUTATION_RATE = float(mutation_entry.get())
+
         
     config(POPULATION_SIZE,MUTATION_RATE)
 
@@ -164,8 +192,16 @@ def timetable_scheduling():
     population.get_schedules().sort(key=lambda x: x.get_fitness(), reverse=True)
     displayMgr.print_generations(population)
     displayMgr.print_schedule_as_table(population.get_schedules()[0])
-    create_plot_tab()
-    update_plot(generation_number, population.get_schedules()[0].get_fitness())
+    
+    add_plot_info(POPULATION_SIZE, MUTATION_RATE)
+    fig, ax, canvas = create_plot_widget()
+    
+    avg_fitness = sum(sch.get_fitness() for sch in population.get_schedules()) / len(population.get_schedules())
+    best_fitness = population.get_schedules()[0].get_fitness()
+    
+    update_plot(generation_number, best_fitness, avg_fitness,
+                ax, canvas, generation_numbers, fitness_values,
+                average_fitness_values)
 
     genetic_algorithm = Genetic_Algorithm()
     while population.get_schedules()[0].get_fitness() != 1.0 and generation_number <= 1000:
@@ -175,26 +211,68 @@ def timetable_scheduling():
         population.get_schedules().sort(key=lambda x: x.get_fitness(), reverse=True)
         displayMgr.print_generations(population)
         displayMgr.print_schedule_as_table(population.get_schedules()[0])
-        update_plot(generation_number, population.get_schedules()[0].get_fitness())
+        avg_fitness = sum(sch.get_fitness() for sch in population.get_schedules()) / len(population.get_schedules())
+        best_fitness = population.get_schedules()[0].get_fitness()
+        update_plot(generation_number, best_fitness, avg_fitness,
+                    ax, canvas, generation_numbers, fitness_values,
+                    average_fitness_values)
 
     final_schedule = population.get_schedules()[0]
     populate_final_schedule(final_schedule,generation_number)
     set_status("Scheduling complete.")
 
+
 def populate_final_schedule(schedule,genration_number):
-    for cls in schedule.get_classes():
+    for class1 in schedule.get_classes():
         final_schedule_tree.insert("", "end", values=(
-            cls.get_dept().get_name(),
-            cls.get_course().get_name(),
-            cls.get_room().get_number(),
-            cls.get_instructor().get_name(),
-            cls.get_meetingTime().get_time()
+            class1.get_dept().get_name(),
+            class1.get_course().get_name(),
+            class1.get_room().get_number(),
+            class1.get_instructor().get_name(),
+            class1.get_meetingTime().get_time()
         ))
         
     generation_label.config(text=f"Total Generations Needed: {genration_number}")
 
+
+def treeview_sort_column(tv, col, reverse):
+    data_list = [(tv.set(k, col), k) for k in tv.get_children("")]
+    try:
+        data_list.sort(key=lambda t: int(t[0]), reverse=reverse)
+    except ValueError:
+        data_list.sort(key=lambda t: t[0], reverse=reverse)
+
+    for index, (val, k) in enumerate(data_list):
+        tv.move(k, "", index)
+
+    tv.heading(col, command=lambda: treeview_sort_column(tv, col, not reverse))
+
+
 def set_status(message):
     status_bar.config(text=message)
+
+
+
+def validate_and_run():
+    try:
+        population_size = int(population_entry.get())
+        mutation_rate = float(mutation_entry.get())
+
+        if population_size <= 0:
+            raise ValueError("Population size must be greater than 0.")
+        if not (0 <= mutation_rate <= 1):
+            raise ValueError("Mutation rate must be between 0 and 1.")
+
+        # If all is valid, assign globals or run your function
+        global POPULATION_SIZE, MUTATION_RATE
+        POPULATION_SIZE = population_size
+        MUTATION_RATE = mutation_rate
+
+        timetable_scheduling()  # or your next function
+    except ValueError as ve:
+        messagebox.showerror("Invalid Input", str(ve))
+
+
 
 # --- GUI Setup ---
 
@@ -208,8 +286,9 @@ style.configure('TButton', font=('Helvetica', 12))
 style.configure('TLabel', font=('Helvetica', 12))
 style.configure('TNotebook.Tab', font=('Helvetica', 11, 'bold'))
 style.configure('TNotebook', background="#ffffff")
+style.configure("Treeview.Heading", font=("Helvetica", 10, "bold"))
+style.configure("Treeview", rowheight=25, font=("Helvetica", 10))
 
-# Top Frame
 # Top Frame
 top_frame = ttk.Frame(root, padding=10)
 top_frame.pack(fill="x")
@@ -227,45 +306,66 @@ mutation_entry.pack(side="left", padx=5)
 mutation_entry.insert(0, "0.1")  # default value
 
 # Display Results Button
-display_results = ttk.Button(top_frame, text="Display Results", command=timetable_scheduling)
+display_results = ttk.Button(top_frame, text="Display Results", command=validate_and_run)
 display_results.pack(side="left", padx=(20,5))
 
 # Close Button
-close_button = ttk.Button(top_frame, text="Close", command=root.destroy)
+close_button = ttk.Button(top_frame, text="Close", command=exit)
 close_button.pack(side="right", padx=5)
 
 # Notebook (Tabs)
 notebook = ttk.Notebook(root)
 notebook.pack(expand=True, fill="both", padx=10, pady=10)
 
-tab1 = ttk.Frame(notebook)  # Available Data
-tab2 = ttk.Frame(notebook)  # Generated Schedule
-tab3 = ttk.Frame(notebook)  # Performance Plot
-tab4 = ttk.Frame(notebook)  # Final Best Schedule
+Available_Data = ttk.Frame(notebook)  # Available Data
+Genetic_Generated_Schedule = ttk.Frame(notebook)  # Generated Schedule
+Performance_Plot = ttk.Frame(notebook)  # Performance Plot
+Final_Best_Schedule = ttk.Frame(notebook)  # Final Best Schedule
 
-notebook.add(tab1, text="Available Data")
-notebook.add(tab2, text="Generated Schedule")
-notebook.add(tab3, text="Performance Plot")
-notebook.add(tab4, text="Final Best Schedule")
+notebook.add(Available_Data, text="Available Data")
+notebook.add(Genetic_Generated_Schedule, text="Genetic Generated Schedule")
+notebook.add(Performance_Plot, text="Performance Plot")
+notebook.add(Final_Best_Schedule, text="Final Best Schedule")
 
 # Tab1: Available Data
-output_data_text = tk.Text(tab1, wrap="word", font=("Consolas", 11))
+output_data_text = tk.Text(Available_Data, wrap="word", font=("Consolas", 11))
 output_data_text.pack(expand=True, fill="both", padx=5, pady=5)
 
 # Tab2: Generated Schedule
-output_schedule_text = tk.Text(tab2, wrap="word", font=("Consolas", 11))
+output_schedule_text = tk.Text(Genetic_Generated_Schedule, wrap="word", font=("Consolas", 11))
 output_schedule_text.pack(expand=True, fill="both", padx=5, pady=5)
 
 # Tab3: Plot will be created dynamically
+plot_container_canvas = Canvas(Performance_Plot)
+scrollbar = Scrollbar(Performance_Plot, orient="vertical", command=plot_container_canvas.yview)
+
+plot_container_canvas.pack(side="left", fill="both", expand=True)
+scrollbar.pack(side="right", fill="y")
+
+# Frame inside the canvas that will hold all plot canvases
+plot_frame = Frame(plot_container_canvas)
+plot_frame.bind(
+    "<Configure>",
+    lambda e: plot_container_canvas.configure(
+        scrollregion=plot_container_canvas.bbox("all")
+    )
+)
+
+# Add the frame into the canvas
+plot_container_canvas.create_window((0, 0), window=plot_frame, anchor="nw")
+
+# Allow full stretching
+Performance_Plot.pack_propagate(False)
 
 # Tab4: Final Best Schedule
-generation_label = tk.Label(tab4, text="", font=("Helvetica", 12, "bold"), fg="blue")
+generation_label = tk.Label(Final_Best_Schedule, text="", font=("Helvetica", 12, "bold"), fg="blue")
 generation_label.pack(pady=5)
 
 columns = ("Department", "Course", "Room", "Instructor", "Time")
-final_schedule_tree = ttk.Treeview(tab4, columns=columns, show="headings")
+final_schedule_tree = ttk.Treeview(Final_Best_Schedule, columns=columns, show="headings")
 for col in columns:
-    final_schedule_tree.heading(col, text=col)
+    # final_schedule_tree.heading(col, text=col)
+    final_schedule_tree.heading(col, text=col, command=lambda _col=col: treeview_sort_column(final_schedule_tree, _col, False))
     final_schedule_tree.column(col, anchor="center", width=200)
 final_schedule_tree.pack(expand=True, fill="both", padx=5, pady=5)
 
