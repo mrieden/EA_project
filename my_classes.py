@@ -35,14 +35,17 @@ class Course:
         return self._name
 
 class Room:
-    def __init__(self,number,seatingCapacity):
+    def __init__(self,id,number,seatingCapacity):
         self._number = number
         self._seatingCapacity = seatingCapacity
+        self._id = id
     
     def get_number(self):
         return self._number
     def get_seatingCapacity(self):
         return self._seatingCapacity
+    def get_id(self):
+        return self._id
 
 class Instructor:
     def __init__(self,id,name):

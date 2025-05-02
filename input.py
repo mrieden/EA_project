@@ -27,9 +27,10 @@ class Data:
         rooms = []
         inputs = self.rooms
         for input in inputs:
+            room_id  = input[0]
             room_name = input[1]
             capacity = input[2]
-            rooms.append(Room(room_name, int(capacity)))
+            rooms.append(Room(room_id,room_name, int(capacity)))
         return rooms
 
     def _get_meeting_times_from_user(self):

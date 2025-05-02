@@ -46,7 +46,7 @@ class Genetic_Algorithm:
     
     def _crossover_schedule(self,schedule1,schedule2):
         crossoverSchedule = sch().initialize()
-        for i in range(0, len(schedule1.get_classes())):
+        for i in range(0, len(crossoverSchedule.get_classes())):
             if(random.random()> 0.5): 
                 crossoverSchedule.get_classes()[i] = schedule1.get_classes()[i]
             else:
@@ -57,6 +57,7 @@ class Genetic_Algorithm:
         schedule = sch().initialize()
         for i in range(0, len(mutateSchdule.get_classes())):
             if(MUTATION_RATE > random.random()):
+            # if(MUTATION_RATE > 0):# for testing
                 mutateSchdule.get_classes()[i] = schedule.get_classes()[i]
         return mutateSchdule
 
@@ -68,3 +69,72 @@ class Genetic_Algorithm:
             i += 1
         tournament_pop.get_schedules().sort(key=lambda x: x.get_fitness(),reverse = True)
         return tournament_pop
+    
+    def swap_mutation(self,old_schdule):
+        schedule = sch().initialize()
+        if MUTATION_RATE > 0:# for testing
+        # if MUTATION_RATE > random.random():
+            classes = old_schdule.get_classes()
+            i, j = random.sample(range(len(classes)), 2)
+            old_schdule.get_classes()[i],old_schdule.get_classes()[j] =schedule.get_classes()[j], schedule.get_classes()[i]
+        return old_schdule
+    
+    def scramble_mutation(self,old_schdule):
+        schedule = sch().initialize()
+        if MUTATION_RATE > 0:# for testing
+        # if MUTATION_RATE > random.random():
+            classes = old_schdule.get_classes()
+            i, j = sorted(random.sample(range(len(classes)), 2))
+            i,j = 2,8# for testing
+            for k in range(i,j):
+                old_schdule.get_classes()[k] =schedule.get_classes()[k]
+        return old_schdule
+    
+    def Order_Crossover(self, parent1, parent2):
+        child = sch().initialize()
+        start_pos = random.randint(0, len(parent1.get_classes()) - 1)
+        end_pos = random.randint(start_pos + 1, len(parent1.get_classes()))
+        start_pos, end_pos = 2, 8 # for testing
+        
+        for i in range(start_pos, end_pos):
+            child.get_classes()[i] = parent1.get_classes()[i]
+        
+        for i in range(end_pos,len(parent2.get_classes())):
+            if parent2.get_classes()[i] not in child.get_classes():
+                for j in range(len(child.get_classes())):
+                    if child.get_classes()[j] == None:
+                        child.get_classes()[j] = parent2.get_classes()[i]
+                        break
+        for i in range(0,start_pos):
+            if parent2.get_classes()[i] not in child.get_classes():
+                for j in range(len(child.get_classes())):
+                    if child.get_classes()[j] == None:
+                        child.get_classes()[j] = parent2.get_classes()[i]
+                        break
+            
+    
+        return child
+
+    
+    # def swap_mutation(self,old_schdule):
+    #     if MUTATION_RATE > 0:# for testing
+    #     # if MUTATION_RATE > random.random():
+    #         classes = old_schdule.get_classes()
+    #         i, j = random.sample(range(len(classes)), 2)
+    #         #swap instructor
+    #         instructor1 = classes[i].get_instructor()
+    #         instructor2 = classes[j].get_instructor()
+    #         classes[i].set_instructor(instructor2)
+    #         classes[j].set_instructor(instructor1)
+    #         #swap room
+    #         room1 = classes[i].get_room()
+    #         room2 = classes[j].get_room()
+    #         classes[i].set_room(room2)
+    #         classes[j].set_room(room1)
+    #         #swap meeting time
+    #         meetingTime1 = classes[i].get_meetingTime()
+    #         meetingTime2 = classes[j].get_meetingTime()
+    #         classes[i].set_meetingTime(meetingTime2)
+    #         classes[j].set_meetingTime(meetingTime1)
+    #     return old_schdule
+

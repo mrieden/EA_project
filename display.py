@@ -5,9 +5,11 @@ from tkinter import Canvas, Frame, Scrollbar
 import tkinter.messagebox as messagebox
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.figure import Figure
 from my_classes import *
 from genetic import Genetic_Algorithm, data, Population
-
+from PSO import Particle
+from Schedule import Schedule
 # Global Variables
 data = data
 plot_windows = []
@@ -164,6 +166,46 @@ def clear_text(widget):
 def clear_treeview(tree):
     for item in tree.get_children():
         tree.delete(item)
+        
+
+def pso_main(particles_num=500, max_iterations=200, w=2, c1=3, c2=5):
+    swarm = [
+        Particle(
+            Schedule().initialize,
+            Schedule().encode_Schedule,
+            Schedule().decode_Schedule,
+            Schedule().fitness_function
+        )
+        for _ in range(particles_num)
+    ]
+
+    global_best_particle = max(swarm, key=lambda p: p.fitness)
+    global_best_position = global_best_particle.position.copy()
+    global_best_fitness = global_best_particle.fitness
+
+    fitness_per_iteration = []
+    average_fitness_per_iteration = []
+
+    for iteration in range(max_iterations):
+        if global_best_fitness == 0:
+            break
+
+        avg_fitness = sum(p.fitness for p in swarm) / particles_num
+        fitness_per_iteration.append(global_best_fitness)
+        average_fitness_per_iteration.append(avg_fitness)
+
+        for particle in swarm:
+            particle.set_velocity(w, c1, c2, global_best_position)
+            particle.apply_velocity()
+
+            if particle.fitness > global_best_fitness:
+                global_best_fitness = particle.fitness
+                global_best_position = particle.position.copy()
+                global_best_particle = particle
+
+    best_schedule = Schedule().decode_Schedule(global_best_particle.base_schedule.get_classes(), global_best_position)
+    return best_schedule, global_best_fitness, fitness_per_iteration, average_fitness_per_iteration
+
 
 
 def timetable_scheduling():
@@ -204,7 +246,7 @@ def timetable_scheduling():
                 average_fitness_values)
 
     genetic_algorithm = Genetic_Algorithm()
-    while population.get_schedules()[0].get_fitness() != 1.0 and generation_number <= 1000:
+    while population.get_schedules()[0].get_fitness() != 1.0 and generation_number <= 100:
         generation_number += 1
         output_schedule_text.insert(tk.END, f"\n> Generation #{generation_number}\n")
         population = genetic_algorithm.evolve(population,POPULATION_SIZE,MUTATION_RATE)
@@ -273,6 +315,60 @@ def validate_and_run():
         messagebox.showerror("Invalid Input", str(ve))
 
 
+def run_pso():
+    best_schedule, best_fitness, fitness_list, avg_list = pso_main()
+
+    for widget in PSO_Tab.winfo_children():
+        widget.destroy()
+
+    # Summary label
+    label = tk.Label(PSO_Tab, text=f"✅ Best Fitness: {best_fitness:.3f} | Iterations: {len(fitness_list)}",
+                    font=("Helvetica", 12, "bold"), fg="blue")
+    label.pack(pady=5)
+
+    # Create a matplotlib plot
+    fig = Figure(figsize=(8, 4), dpi=100)
+    ax = fig.add_subplot(111)
+    ax.plot(range(len(fitness_list)), fitness_list, label="Best Fitness", marker='o')
+    ax.plot(range(len(avg_list)), avg_list, label="Average Fitness", linestyle='--')
+    ax.set_title("Fitness Over Iterations")
+    ax.set_xlabel("Iteration")
+    ax.set_ylabel("Fitness")
+    ax.legend()
+    ax.grid(True)
+
+    canvas = FigureCanvasTkAgg(fig, master=PSO_Tab)
+    canvas.draw()
+    canvas.get_tk_widget().pack(fill='both', expand=True, padx=10, pady=5)
+
+    # Treeview schedule table
+    tree = ttk.Treeview(PSO_Tab, columns=("Dept", "Course", "Room", "Time", "Instructor"), show='headings')
+    for col in tree["columns"]:
+        tree.heading(col, text=col, command=lambda _col=col: sort_tree_column(tree, _col, False))
+        tree.column(col, width=130, anchor="center")
+    tree.pack(expand=True, fill="both", padx=10, pady=5)
+
+    for cls in best_schedule:
+        tree.insert("", "end", values=(
+            cls.get_dept().get_name(),
+            cls.get_course().get_name(),
+            cls.get_room().get_number(),
+            cls.get_meetingTime().get_time(),
+            cls.get_instructor().get_name()
+        ))
+        
+def sort_tree_column(treeview, col, reverse):
+    data = [(treeview.set(child, col), child) for child in treeview.get_children('')]
+    try:
+        data.sort(key=lambda t: float(t[0]), reverse=reverse)
+    except ValueError:
+        data.sort(key=lambda t: t[0], reverse=reverse)
+
+    for index, (val, item) in enumerate(data):
+        treeview.move(item, '', index)
+
+    treeview.heading(col, command=lambda: sort_tree_column(treeview, col, not reverse))
+
 
 # --- GUI Setup ---
 
@@ -321,11 +417,13 @@ Available_Data = ttk.Frame(notebook)  # Available Data
 Genetic_Generated_Schedule = ttk.Frame(notebook)  # Generated Schedule
 Performance_Plot = ttk.Frame(notebook)  # Performance Plot
 Final_Best_Schedule = ttk.Frame(notebook)  # Final Best Schedule
+PSO_Tab = ttk.Frame(notebook)
 
 notebook.add(Available_Data, text="Available Data")
 notebook.add(Genetic_Generated_Schedule, text="Genetic Generated Schedule")
 notebook.add(Performance_Plot, text="Performance Plot")
 notebook.add(Final_Best_Schedule, text="Final Best Schedule")
+notebook.add(PSO_Tab, text="PSO Scheduler")
 
 # Tab1: Available Data
 output_data_text = tk.Text(Available_Data, wrap="word", font=("Consolas", 11))
@@ -368,6 +466,10 @@ for col in columns:
     final_schedule_tree.heading(col, text=col, command=lambda _col=col: treeview_sort_column(final_schedule_tree, _col, False))
     final_schedule_tree.column(col, anchor="center", width=200)
 final_schedule_tree.pack(expand=True, fill="both", padx=5, pady=5)
+
+pso_run_button = tk.Button(PSO_Tab, text="Run PSO Scheduler", command=run_pso)
+pso_run_button.pack(pady=10)
+
 
 # Status Bar
 status_bar = ttk.Label(root, text="Ready", relief="sunken", anchor="w", padding=5)
