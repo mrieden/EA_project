@@ -16,6 +16,10 @@ class Schedule:
         self._isFitnessChanged = True
         return self._classes
     
+    def set_classes(self, classes):
+        self._classes = classes
+        
+    
     
     def get_numbOfConflicts(self):
         return self._numbOfConflicts
@@ -63,6 +67,10 @@ class Schedule:
 
             if room.get_seatingCapacity() < course.get_max_no_students():
                 self._numbOfConflicts += 1
+                
+            # unused = class1.get_room().get_seatingCapacity() - class1.get_course().get_max_no_students()
+            # if unused > 20:
+            #     self._numbOfConflicts += 1
 
             for j in range(i + 1, len(classes)): 
                 class2 = classes[j]

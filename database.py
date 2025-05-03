@@ -53,7 +53,7 @@ class TimetableDatabaseManager:
                 "CREATE TABLE courses ("
                 "  course_id INT AUTO_INCREMENT PRIMARY KEY,"
                 "  course_name VARCHAR(100),"
-                "  student_no INT,"
+                "  no_of_students INT,"
                 "  dept_id INT,"
                 "  FOREIGN KEY (dept_id) REFERENCES departments(dept_id)"
                 ")"
@@ -138,7 +138,8 @@ class TimetableDatabaseManager:
             """INSERT INTO rooms (room_name, capacity) VALUES 
                 ('Room A', 30), 
                 ('Room B', 50), 
-                ('Room C', 25)
+                ('Room C', 15),
+                ('Room D', 20)
                 """,
 
             """INSERT INTO timeslots (day, time_range) VALUES 

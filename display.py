@@ -168,7 +168,7 @@ def clear_treeview(tree):
         tree.delete(item)
         
 
-def pso_main(particles_num=500, max_iterations=200, w=2, c1=3, c2=5):
+def pso_main(particles_num=500, max_iterations=200, w=0.5, c1=2, c2=6):
     swarm = [
         Particle(
             Schedule().initialize,
@@ -305,7 +305,6 @@ def validate_and_run():
         if not (0 <= mutation_rate <= 1):
             raise ValueError("Mutation rate must be between 0 and 1.")
 
-        # If all is valid, assign globals or run your function
         global POPULATION_SIZE, MUTATION_RATE
         POPULATION_SIZE = population_size
         MUTATION_RATE = mutation_rate
@@ -344,7 +343,7 @@ def run_pso():
     # Treeview schedule table
     tree = ttk.Treeview(PSO_Tab, columns=("Dept", "Course", "Room", "Time", "Instructor"), show='headings')
     for col in tree["columns"]:
-        tree.heading(col, text=col, command=lambda _col=col: sort_tree_column(tree, _col, False))
+        tree.heading(col, text=col, command=lambda _col=col: treeview_sort_column(tree, _col, False))
         tree.column(col, width=130, anchor="center")
     tree.pack(expand=True, fill="both", padx=10, pady=5)
 
@@ -357,18 +356,6 @@ def run_pso():
             cls.get_instructor().get_name()
         ))
         
-def sort_tree_column(treeview, col, reverse):
-    data = [(treeview.set(child, col), child) for child in treeview.get_children('')]
-    try:
-        data.sort(key=lambda t: float(t[0]), reverse=reverse)
-    except ValueError:
-        data.sort(key=lambda t: t[0], reverse=reverse)
-
-    for index, (val, item) in enumerate(data):
-        treeview.move(item, '', index)
-
-    treeview.heading(col, command=lambda: sort_tree_column(treeview, col, not reverse))
-
 
 # --- GUI Setup ---
 

@@ -1,5 +1,6 @@
 from Schedule import data as Data 
 from my_classes import *
+random.seed(1)
 
 class Particle:
     def __init__(self, generate_Schedule, encode_Schedule, decode_Schedule, fitness_function):
@@ -42,6 +43,7 @@ class Particle:
     def set_velocity(self, w, c1, c2, global_best_position):
         new_velocity = []
         for i in range(len(self.position)):
+            
             r1 = random.random()
             r2 = random.random()
 
